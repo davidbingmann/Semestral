@@ -27,13 +27,8 @@ struct ModuleFormView: View {
                     paletteSwatches
                 }
 
-                Toggle("Has exam", isOn: $hasExam.animation())
-                if hasExam {
-                    DatePicker(
-                        "Exam date",
-                        selection: $examDate,
-                        displayedComponents: [.date, .hourAndMinute]
-                    )
+                LabeledContent("Exam date") {
+                    examDateField
                 }
             }
             .formStyle(.grouped)
@@ -49,6 +44,34 @@ struct ModuleFormView: View {
         .padding()
         .frame(minWidth: 460, minHeight: 360)
         .onAppear(perform: load)
+    }
+
+    @ViewBuilder
+    private var examDateField: some View {
+        if hasExam {
+            HStack(spacing: 8) {
+                DatePicker(
+                    "",
+                    selection: $examDate,
+                    displayedComponents: [.date, .hourAndMinute]
+                )
+                .labelsHidden()
+                Button("Remove") {
+                    withAnimation { hasExam = false }
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.red)
+            }
+        } else {
+            HStack {
+                Text("Not set").foregroundStyle(.secondary)
+                Spacer()
+                Button("Set date…") {
+                    examDate = .now
+                    withAnimation { hasExam = true }
+                }
+            }
+        }
     }
 
     private var paletteSwatches: some View {

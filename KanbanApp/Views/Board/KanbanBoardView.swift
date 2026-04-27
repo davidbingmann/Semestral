@@ -1,10 +1,43 @@
 import SwiftUI
 import SwiftData
 
+enum BoardSelection: Hashable {
+    case semester(Semester)
+    case module(Module)
+
+    var semester: Semester? {
+        switch self {
+        case .semester(let s): s
+        case .module(let m):   m.semester
+        }
+    }
+
+    var defaultModule: Module? {
+        switch self {
+        case .semester(let s): s.modules.first
+        case .module(let m):   m
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .semester(let s): s.name
+        case .module(let m):   m.name
+        }
+    }
+
+    var tasks: [KanbanTask] {
+        switch self {
+        case .semester(let s): s.modules.flatMap(\.tasks)
+        case .module(let m):   m.tasks
+        }
+    }
+}
+
 struct KanbanBoardView: View {
     @Environment(\.modelContext) private var context
 
-    @State private var selected: Module?
+    @State private var selected: BoardSelection?
     @State private var creatingTask = false
     @State private var editingTask: KanbanTask?
 
@@ -22,20 +55,20 @@ struct KanbanBoardView: View {
                 } label: {
                     Label("Add Task", systemImage: "plus")
                 }
-                .disabled(selected == nil)
+                .disabled(selected?.defaultModule == nil)
             }
         }
         .sheet(isPresented: $creatingTask) {
             TaskFormView(
                 semester: selected?.semester,
-                defaultModule: selected,
+                defaultModule: selected?.defaultModule,
                 existing: nil
             )
         }
         .sheet(item: $editingTask) { t in
             TaskFormView(
                 semester: t.module?.semester ?? selected?.semester,
-                defaultModule: t.module ?? selected,
+                defaultModule: t.module ?? selected?.defaultModule,
                 existing: t
             )
         }
@@ -43,18 +76,26 @@ struct KanbanBoardView: View {
 
     @ViewBuilder
     private var detail: some View {
-        if let module = selected {
+        switch selected {
+        case .semester(let s) where s.modules.isEmpty:
+            ContentUnavailableView(
+                "No Modules in This Semester",
+                systemImage: "rectangle.3.group",
+                description: Text("Add a module in the Modules tab to start creating tasks.")
+            )
+        case .some(let scope):
             BoardColumns(
-                module: module,
+                title: scope.title,
+                tasks: scope.tasks,
                 onEdit: { editingTask = $0 },
                 onDelete: delete(task:),
                 onMove: move(task:to:)
             )
-        } else {
+        case .none:
             ContentUnavailableView(
-                "Select a Module",
+                "Select a Semester or Module",
                 systemImage: "rectangle.split.3x1",
-                description: Text("Pick a module from the sidebar to see its board.")
+                description: Text("Pick from the sidebar to see its board.")
             )
         }
     }
@@ -71,7 +112,8 @@ struct KanbanBoardView: View {
 }
 
 private struct BoardColumns: View {
-    let module: Module
+    let title: String
+    let tasks: [KanbanTask]
     let onEdit: (KanbanTask) -> Void
     let onDelete: (KanbanTask) -> Void
     let onMove: (KanbanTask, KanbanStatus) -> Void
@@ -81,7 +123,7 @@ private struct BoardColumns: View {
             ForEach(KanbanStatus.allCases) { status in
                 KanbanColumnView(
                     status: status,
-                    tasks: tasks(for: status),
+                    tasks: filteredTasks(for: status),
                     onEdit: onEdit,
                     onDelete: onDelete,
                     onMove: onMove
@@ -89,18 +131,18 @@ private struct BoardColumns: View {
             }
         }
         .padding(12)
-        .navigationTitle(module.name)
+        .navigationTitle(title)
     }
 
-    private func tasks(for status: KanbanStatus) -> [KanbanTask] {
-        module.tasks
+    private func filteredTasks(for status: KanbanStatus) -> [KanbanTask] {
+        tasks
             .filter { $0.status == status }
             .sorted { lhs, rhs in
                 switch (lhs.deadline, rhs.deadline) {
-                case let (l?, r?): return l < r
-                case (_?, nil):    return true
-                case (nil, _?):    return false
-                case (nil, nil):   return lhs.title < rhs.title
+                case let (l?, r?): l < r
+                case (_?, nil):    true
+                case (nil, _?):    false
+                case (nil, nil):   lhs.title < rhs.title
                 }
             }
     }

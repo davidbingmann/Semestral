@@ -20,10 +20,5 @@ struct KanbanAppApp: App {
             ContentView()
         }
         .modelContainer(container)
-
-        Settings {
-            SettingsView()
-                .modelContainer(container)
-        }
     }
 }

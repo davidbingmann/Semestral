@@ -9,6 +9,9 @@ struct ContentView: View {
             KanbanBoardView()
                 .tabItem { Label("Board", systemImage: "rectangle.split.3x1") }
 
+            ManageView()
+                .tabItem { Label("Modules", systemImage: "folder") }
+
             CalendarTab()
                 .tabItem { Label("Calendar", systemImage: "calendar") }
 

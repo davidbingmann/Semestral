@@ -14,7 +14,7 @@ struct ExamsTab: View {
                 ContentUnavailableView(
                     "No Exam Dates",
                     systemImage: "graduationcap",
-                    description: Text("Add an exam date to a module in Settings (⌘,).")
+                    description: Text("Add an exam date to a module in the Modules tab.")
                 )
             } else {
                 List {

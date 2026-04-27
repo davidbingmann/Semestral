@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-struct SettingsView: View {
+struct ManageView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Semester.startDate, order: .reverse) private var semesters: [Semester]
 
