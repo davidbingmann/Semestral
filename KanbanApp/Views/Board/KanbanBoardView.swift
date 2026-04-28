@@ -211,8 +211,10 @@ struct KanbanBoardView: View {
     }
 
     private func move(task: KanbanTask, to status: KanbanStatus) {
-        task.updateStatus(status)
-        try? context.save()
+        withAnimation(.spring(duration: 0.4, bounce: 0.15)) {
+            task.updateStatus(status)
+            try? context.save()
+        }
     }
 }
 

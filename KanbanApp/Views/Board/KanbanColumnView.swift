@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 struct KanbanColumnView: View {
     let status: KanbanStatus
@@ -9,6 +10,7 @@ struct KanbanColumnView: View {
     let onDrop: ([TaskDragPayload]) -> Void
 
     @State private var isTargeted = false
+    @State private var arrival: ArrivalInfo?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -40,6 +42,10 @@ struct KanbanColumnView: View {
                             onDelete: { onDelete(task) },
                             onMove: { onMove(task, $0) }
                         )
+                        .modifier(DropArrivalEffect(
+                            dropPoint: arrival?.id == task.persistentModelID ? arrival?.point : nil
+                        ))
+                        .transition(.identity)
                     }
                 }
                 .padding(.horizontal, 4)
@@ -55,13 +61,56 @@ struct KanbanColumnView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(Color.accentColor, lineWidth: isTargeted ? 2 : 0)
+                .strokeBorder(Color.accentColor.opacity(isTargeted ? 1 : 0), lineWidth: 2)
+                .animation(.easeInOut(duration: 0.2), value: isTargeted)
         )
-        .dropDestination(for: TaskDragPayload.self) { payloads, _ in
+        .coordinateSpace(.named("kanbanColumn"))
+        .dropDestination(for: TaskDragPayload.self) { payloads, location in
+            for p in payloads {
+                arrival = ArrivalInfo(id: p.id, point: location)
+            }
             onDrop(payloads)
             return !payloads.isEmpty
         } isTargeted: { targeted in
             isTargeted = targeted
         }
+    }
+
+    private struct ArrivalInfo: Equatable {
+        let id: PersistentIdentifier
+        let point: CGPoint
+    }
+}
+
+private struct DropArrivalEffect: ViewModifier {
+    let dropPoint: CGPoint?
+    @State private var offset: CGSize = .zero
+    @State private var didStart = false
+
+    func body(content: Content) -> some View {
+        content
+            .offset(offset)
+            .background {
+                GeometryReader { proxy in
+                    Color.clear.onAppear {
+                        guard !didStart, let dp = dropPoint else { return }
+                        didStart = true
+                        let f = proxy.frame(in: .named("kanbanColumn"))
+                        var t = Transaction()
+                        t.disablesAnimations = true
+                        withTransaction(t) {
+                            offset = CGSize(
+                                width: dp.x - f.midX,
+                                height: dp.y - f.midY
+                            )
+                        }
+                        DispatchQueue.main.async {
+                            withAnimation(.spring(duration: 0.4, bounce: 0.15)) {
+                                offset = .zero
+                            }
+                        }
+                    }
+                }
+            }
     }
 }
