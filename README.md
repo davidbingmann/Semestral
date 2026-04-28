@@ -47,7 +47,3 @@ KanbanApp/
 ├── KanbanApp.swift    @main, ModelContainer
 └── ContentView.swift  4-tab TabView
 ```
-
-## Architecture
-
-See [`KanbanApp_Architecture.md`](KanbanApp_Architecture.md) for the data model rationale and [`CLAUDE.md`](CLAUDE.md) for project-specific conventions and gotchas.
