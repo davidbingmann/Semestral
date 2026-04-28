@@ -59,17 +59,11 @@ struct TaskCardView: View {
 
     private func deadlineColor(for date: Date) -> Color {
         if task.status == .done { return .secondary }
-        let effective = effectiveDeadline(for: date)
+        let effective = task.effectiveDeadline ?? date
         if effective < .now { return .red }
         if effective < Calendar.current.date(byAdding: .day, value: 2, to: .now) ?? effective {
             return .orange
         }
         return .secondary
-    }
-
-    private func effectiveDeadline(for date: Date) -> Date {
-        if task.deadlineHasTime { return date }
-        let cal = Calendar.current
-        return cal.date(bySettingHour: 23, minute: 59, second: 59, of: date) ?? date
     }
 }

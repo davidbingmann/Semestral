@@ -253,8 +253,8 @@ private struct BoardColumns: View {
         tasks
             .filter { $0.status == status }
             .sorted { lhs, rhs in
-                switch (lhs.deadline, rhs.deadline) {
-                case let (l?, r?): l < r
+                switch (lhs.effectiveDeadline, rhs.effectiveDeadline) {
+                case let (l?, r?): l == r ? lhs.title < rhs.title : l < r
                 case (_?, nil):    true
                 case (nil, _?):    false
                 case (nil, nil):   lhs.title < rhs.title

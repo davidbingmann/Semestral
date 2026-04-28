@@ -10,6 +10,7 @@ struct SemesterFormView: View {
     @State private var name: String = ""
     @State private var startDate: Date = .now
     @State private var endDate: Date = Calendar.current.date(byAdding: .month, value: 6, to: .now) ?? .now
+    @State private var degree: DegreeType = .bachelor
 
     private var isEditing: Bool { existing != nil }
 
@@ -20,6 +21,11 @@ struct SemesterFormView: View {
 
             Form {
                 TextField("Name", text: $name, prompt: Text("e.g. WiSe 2025/26"))
+                Picker("Degree", selection: $degree) {
+                    ForEach(DegreeType.allCases) { d in
+                        Text(d.label).tag(d)
+                    }
+                }
                 DatePicker("Start", selection: $startDate, displayedComponents: .date)
                 DatePicker("End", selection: $endDate, displayedComponents: .date)
             }
@@ -40,6 +46,7 @@ struct SemesterFormView: View {
                 name = s.name
                 startDate = s.startDate
                 endDate = s.endDate
+                degree = s.degree ?? .bachelor
             }
         }
     }
@@ -50,8 +57,9 @@ struct SemesterFormView: View {
             s.name = trimmed
             s.startDate = startDate
             s.endDate = endDate
+            s.degree = degree
         } else {
-            let s = Semester(name: trimmed, startDate: startDate, endDate: endDate)
+            let s = Semester(name: trimmed, startDate: startDate, endDate: endDate, degree: degree)
             context.insert(s)
         }
         try? context.save()

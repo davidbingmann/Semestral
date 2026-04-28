@@ -43,11 +43,9 @@ struct TaskFormView: View {
 
                 Toggle("Has deadline", isOn: $hasDeadline.animation())
                 if hasDeadline {
-                    DatePicker(
-                        "Date",
-                        selection: $deadline,
-                        displayedComponents: .date
-                    )
+                    LabeledContent("Date") {
+                        DatePopoverButton(date: $deadline)
+                    }
                     LabeledContent("Time") {
                         timeField
                     }

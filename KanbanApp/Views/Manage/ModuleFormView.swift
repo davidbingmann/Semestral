@@ -58,8 +58,8 @@ struct ModuleFormView: View {
     private var examDateField: some View {
         if hasExam {
             HStack(spacing: 8) {
-                DatePicker("", selection: $examDate, displayedComponents: .date)
-                    .labelsHidden()
+                DatePopoverButton(date: $examDate)
+                Spacer()
                 Button("Remove") {
                     withAnimation {
                         hasExam = false

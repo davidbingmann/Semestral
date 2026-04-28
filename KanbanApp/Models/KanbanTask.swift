@@ -84,6 +84,12 @@ final class KanbanTask {
         return hidden <= .now
     }
 
+    var effectiveDeadline: Date? {
+        guard let d = deadline else { return nil }
+        if deadlineHasTime { return d }
+        return Calendar.current.date(bySettingHour: 23, minute: 59, second: 59, of: d) ?? d
+    }
+
     func updateStatus(_ new: KanbanStatus) {
         if new == .done, let rec = recurrence {
             rollover(using: rec)

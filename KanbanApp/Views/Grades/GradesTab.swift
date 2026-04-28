@@ -9,54 +9,92 @@ struct GradesTab: View {
     private var allGrades: [Grade]
 
     @AppStorage("selectedSemesterID") private var selectedSemesterIDString: String = ""
+    @AppStorage("selectedDegree") private var selectedDegreeRaw: String = DegreeType.bachelor.rawValue
 
     @State private var creatingGrade = false
     @State private var editingGrade: Grade?
 
+    private var selectedDegree: DegreeType {
+        DegreeType(rawValue: selectedDegreeRaw) ?? .bachelor
+    }
+
+    private var filteredGrades: [Grade] {
+        allGrades.filter { ($0.module?.semester?.degree ?? .bachelor) == selectedDegree }
+    }
+
+    private var semestersWithGrades: [Semester] {
+        semesters.filter { semester in
+            (semester.degree ?? .bachelor) == selectedDegree &&
+            semester.modules.contains { !$0.grades.isEmpty }
+        }
+    }
+
+    private var creationSemester: Semester? {
+        if let active = activeSemester, (active.degree ?? .bachelor) == selectedDegree { return active }
+        return semesters.first { ($0.degree ?? .bachelor) == selectedDegree }
+    }
+
     var body: some View {
-        Group {
-            if allGrades.isEmpty {
-                ContentUnavailableView(
-                    "No Grades",
-                    systemImage: "graduationcap.fill",
-                    description: Text(
-                        activeSemester == nil
-                        ? "Add a semester first, then tap + to record a grade."
-                        : "Tap + to record your first grade."
-                    )
-                )
-            } else {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
-                        OverallSummaryCard(grades: allGrades)
-                        ForEach(semestersWithGrades) { semester in
-                            SemesterSection(
-                                semester: semester,
-                                onEdit: { editingGrade = $0 },
-                                onDelete: delete
-                            )
-                        }
-                    }
-                    .padding(20)
-                    .padding(.bottom, 96)
+        VStack(spacing: 0) {
+            Picker("Degree", selection: $selectedDegreeRaw) {
+                ForEach(DegreeType.allCases) { d in
+                    Text(d.label).tag(d.rawValue)
                 }
             }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 8)
+
+            content
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .overlay(alignment: .bottomLeading) {
-            if activeSemester != nil {
+            if creationSemester != nil {
                 PlusFAB { creatingGrade = true }
                     .padding(20)
             }
         }
         .sheet(isPresented: $creatingGrade) {
-            if let s = activeSemester {
+            if let s = creationSemester {
                 GradeFormView(semester: s, existing: nil)
             }
         }
         .sheet(item: $editingGrade) { grade in
-            if let s = grade.module?.semester ?? activeSemester {
+            if let s = grade.module?.semester ?? creationSemester {
                 GradeFormView(semester: s, existing: grade)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if filteredGrades.isEmpty {
+            ContentUnavailableView(
+                "No \(selectedDegree.label) Grades",
+                systemImage: "graduationcap.fill",
+                description: Text(
+                    creationSemester == nil
+                    ? "Add a \(selectedDegree.label) semester first, then tap + to record a grade."
+                    : "Tap + to record your first \(selectedDegree.label) grade."
+                )
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    OverallSummaryCard(grades: filteredGrades, degree: selectedDegree)
+                    ForEach(semestersWithGrades) { semester in
+                        SemesterSection(
+                            semester: semester,
+                            onEdit: { editingGrade = $0 },
+                            onDelete: delete
+                        )
+                    }
+                }
+                .padding(20)
+                .padding(.bottom, 96)
             }
         }
     }
@@ -71,12 +109,6 @@ struct GradesTab: View {
         return match
     }
 
-    private var semestersWithGrades: [Semester] {
-        semesters.filter { semester in
-            semester.modules.contains { !$0.grades.isEmpty }
-        }
-    }
-
     @Environment(\.modelContext) private var context
 
     private func delete(_ grade: Grade) {
@@ -89,6 +121,7 @@ struct GradesTab: View {
 
 private struct OverallSummaryCard: View {
     let grades: [Grade]
+    let degree: DegreeType
 
     var body: some View {
         let avg = Grade.weightedAverage(grades)
@@ -96,7 +129,7 @@ private struct OverallSummaryCard: View {
 
         HStack(alignment: .center, spacing: 24) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Overall Average")
+                Text("\(degree.label) Average")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
                 if let avg {
@@ -115,7 +148,10 @@ private struct OverallSummaryCard: View {
 
             VStack(alignment: .trailing, spacing: 10) {
                 StatPill(label: "Grades", value: "\(grades.count)")
-                StatPill(label: "ECTS", value: ectsString(totalEcts))
+                StatPill(
+                    label: "ECTS",
+                    value: "\(ectsString(totalEcts)) / \(ectsString(degree.ectsTarget))"
+                )
             }
         }
         .padding(22)

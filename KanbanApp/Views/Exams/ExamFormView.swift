@@ -20,7 +20,9 @@ struct ExamFormView: View {
             Form {
                 LabeledContent("Module") { moduleMenu }
 
-                DatePicker("Date", selection: $examDate, displayedComponents: .date)
+                LabeledContent("Date") {
+                    DatePopoverButton(date: $examDate)
+                }
 
                 LabeledContent("Time") { timeField }
             }
