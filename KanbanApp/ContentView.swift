@@ -21,17 +21,20 @@ struct ContentView: View {
                 .tabItem { Label("Grades", systemImage: "chart.bar.fill") }
         }
         .frame(minWidth: 960, minHeight: 640)
-        .task { runCleanup() }
+        .task {
+            Exam.migrateLegacyExamDates(in: context)
+            runCleanup()
+        }
         .onReceive(cleanupTimer) { _ in runCleanup() }
     }
 
     private func runCleanup() {
         KanbanTask.deleteExpired(in: context)
-        Module.expireOldExams(in: context)
+        Exam.deleteExpired(in: context)
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: [Semester.self, Module.self, KanbanTask.self, Grade.self], inMemory: true)
+        .modelContainer(for: [Semester.self, Module.self, KanbanTask.self, Grade.self, Exam.self], inMemory: true)
 }

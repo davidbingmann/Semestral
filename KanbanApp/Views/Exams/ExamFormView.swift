@@ -6,45 +6,71 @@ struct ExamFormView: View {
     @Environment(\.dismiss) private var dismiss
 
     let semester: Semester
+    let existing: Exam?
 
     @State private var selectedModule: Module?
     @State private var examDate: Date = .now
     @State private var hasTime: Bool = false
     @State private var creatingModule = false
 
+    @State private var isPortfolio: Bool = false
+    @State private var portfolioDates: [DraftExam] = []
+
+    private struct DraftExam: Identifiable {
+        let id = UUID()
+        var date: Date
+        var hasTime: Bool
+    }
+
+    init(semester: Semester, existing: Exam? = nil) {
+        self.semester = semester
+        self.existing = existing
+    }
+
+    private var isEditing: Bool { existing != nil }
+
+    private var canSave: Bool {
+        guard selectedModule != nil else { return false }
+        if isPortfolio { return !portfolioDates.isEmpty }
+        return true
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("New Exam")
+            Text(isEditing ? "Edit Exam" : "New Exam")
                 .font(.title2).bold()
 
             Form {
                 LabeledContent("Module") { moduleMenu }
 
-                LabeledContent("Date") {
-                    DatePopoverButton(date: $examDate)
+                if !isEditing {
+                    Toggle("Portfolio", isOn: $isPortfolio.animation())
                 }
 
-                LabeledContent("Time") { timeField }
+                if isPortfolio {
+                    portfolioSection
+                } else {
+                    LabeledContent("Date") {
+                        DatePopoverButton(date: $examDate)
+                    }
+                    LabeledContent("Time") {
+                        OptionalTimeField(date: $examDate, hasTime: $hasTime)
+                    }
+                }
             }
             .formStyle(.grouped)
 
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }
-                Button("Save") { save() }
+                Button(isEditing ? "Save" : "Add") { save() }
                     .keyboardShortcut(.defaultAction)
-                    .disabled(selectedModule == nil)
+                    .disabled(!canSave)
             }
         }
         .padding()
         .frame(minWidth: 460, minHeight: 320)
-        .onAppear {
-            if selectedModule == nil { selectedModule = semester.modules.first }
-            syncFields(to: selectedModule)
-        }
-        .onChange(of: selectedModule) { _, newModule in
-            syncFields(to: newModule)
-        }
+        .onAppear(perform: load)
         .sheet(isPresented: $creatingModule) {
             ModuleFormView(semester: semester, existing: nil) { newModule in
                 selectedModule = newModule
@@ -52,27 +78,45 @@ struct ExamFormView: View {
         }
     }
 
-    @ViewBuilder
-    private var timeField: some View {
-        if hasTime {
-            HStack(spacing: 8) {
-                DatePicker("", selection: $examDate, displayedComponents: .hourAndMinute)
-                    .labelsHidden()
-                Button("Remove") {
-                    withAnimation { hasTime = false }
-                }
-                .buttonStyle(.borderless)
-                .foregroundStyle(.red)
+    private var portfolioSection: some View {
+        Section("Exam dates") {
+            ForEach($portfolioDates) { $draft in
+                portfolioRow(for: $draft)
             }
-        } else {
-            HStack {
-                Text("Not set").foregroundStyle(.secondary)
-                Spacer()
-                Button("Set time…") {
-                    withAnimation { hasTime = true }
+            Button {
+                withAnimation {
+                    portfolioDates.append(DraftExam(date: .now, hasTime: false))
                 }
+            } label: {
+                Label("Add date", systemImage: "plus")
             }
         }
+    }
+
+    @ViewBuilder
+    private func portfolioRow(for draft: Binding<DraftExam>) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                DatePopoverButton(date: draft.date)
+                Spacer()
+                Button {
+                    withAnimation {
+                        portfolioDates.removeAll { $0.id == draft.wrappedValue.id }
+                    }
+                } label: {
+                    Image(systemName: "minus.circle.fill")
+                        .foregroundStyle(.red)
+                }
+                .buttonStyle(.borderless)
+            }
+
+            HStack(spacing: 8) {
+                Text("Time").foregroundStyle(.secondary).font(.caption)
+                Spacer()
+                OptionalTimeField(date: draft.date, hasTime: draft.hasTime)
+            }
+        }
+        .padding(.vertical, 2)
     }
 
     private var moduleMenu: some View {
@@ -108,20 +152,29 @@ struct ExamFormView: View {
         .fixedSize()
     }
 
-    private func syncFields(to module: Module?) {
-        if let m = module, let d = m.examDate {
-            examDate = d
-            hasTime = m.examDateHasTime
-        } else {
-            examDate = .now
-            hasTime = false
+    private func load() {
+        if let e = existing {
+            selectedModule = e.module
+            examDate = e.date
+            hasTime = e.hasTime
+        } else if selectedModule == nil {
+            selectedModule = semester.modules.first
         }
     }
 
     private func save() {
         guard let m = selectedModule else { return }
-        m.examDate = examDate
-        m.examDateHasTime = hasTime
+        if let e = existing {
+            e.date = examDate
+            e.hasTime = hasTime
+            if e.module !== m { e.module = m }
+        } else if isPortfolio {
+            for d in portfolioDates {
+                context.insert(Exam(date: d.date, hasTime: d.hasTime, module: m))
+            }
+        } else {
+            context.insert(Exam(date: examDate, hasTime: hasTime, module: m))
+        }
         try? context.save()
         dismiss()
     }

@@ -17,6 +17,12 @@ struct ModuleFormView: View {
 
     private var isEditing: Bool { existing != nil }
 
+    /// True when the module already holds multiple Exam rows — editing a single date here
+    /// would silently drop the others, so we show a read-only summary instead.
+    private var hasMultipleDates: Bool {
+        (existing?.exams.count ?? 0) > 1
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(isEditing ? "Edit Module" : "New Module")
@@ -25,17 +31,19 @@ struct ModuleFormView: View {
             Form {
                 TextField("Name", text: $name, prompt: Text("e.g. Programmierung I"))
 
-                LabeledContent("Colour") {
-                    paletteSwatches
-                }
+                LabeledContent("Colour") { paletteSwatches }
 
-                LabeledContent("Exam date") {
-                    examDateField
-                }
-
-                if hasExam {
-                    LabeledContent("Time") {
-                        timeField
+                if hasMultipleDates {
+                    LabeledContent("Exam dates") {
+                        Text("\(existing?.exams.count ?? 0) dates — manage on Exams tab")
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    LabeledContent("Exam date") { examDateField }
+                    if hasExam {
+                        LabeledContent("Time") {
+                            OptionalTimeField(date: $examDate, hasTime: $hasTime)
+                        }
                     }
                 }
             }
@@ -81,29 +89,6 @@ struct ModuleFormView: View {
         }
     }
 
-    @ViewBuilder
-    private var timeField: some View {
-        if hasTime {
-            HStack(spacing: 8) {
-                DatePicker("", selection: $examDate, displayedComponents: .hourAndMinute)
-                    .labelsHidden()
-                Button("Remove") {
-                    withAnimation { hasTime = false }
-                }
-                .buttonStyle(.borderless)
-                .foregroundStyle(.red)
-            }
-        } else {
-            HStack {
-                Text("Not set").foregroundStyle(.secondary)
-                Spacer()
-                Button("Set time…") {
-                    withAnimation { hasTime = true }
-                }
-            }
-        }
-    }
-
     private var paletteSwatches: some View {
         HStack(spacing: 8) {
             ForEach(Module.palette, id: \.self) { hex in
@@ -126,10 +111,10 @@ struct ModuleFormView: View {
         if let m = existing {
             name = m.name
             colorHex = m.colorHex
-            if let d = m.examDate {
+            if let first = m.exams.sorted(by: { $0.date < $1.date }).first {
                 hasExam = true
-                hasTime = m.examDateHasTime
-                examDate = d
+                hasTime = first.hasTime
+                examDate = first.date
             }
         } else {
             colorHex = Module.nextColor(for: semester)
@@ -138,22 +123,28 @@ struct ModuleFormView: View {
 
     private func save() {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
-        let exam = hasExam ? examDate : nil
-        let result: Module
+        let module: Module
         if let m = existing {
             m.name = trimmed
             m.colorHex = colorHex
-            m.examDate = exam
-            m.examDateHasTime = hasExam ? hasTime : true
-            result = m
+            module = m
         } else {
-            let m = Module(name: trimmed, colorHex: colorHex, examDate: exam, semester: semester)
-            m.examDateHasTime = hasExam ? hasTime : true
+            let m = Module(name: trimmed, colorHex: colorHex, semester: semester)
             context.insert(m)
-            result = m
+            module = m
         }
+
+        if !hasMultipleDates {
+            for exam in Array(module.exams) {
+                context.delete(exam)
+            }
+            if hasExam {
+                context.insert(Exam(date: examDate, hasTime: hasTime, module: module))
+            }
+        }
+
         try? context.save()
-        onSave?(result)
+        onSave?(module)
         dismiss()
     }
 }

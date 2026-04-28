@@ -3,8 +3,7 @@ import SwiftData
 
 struct CalendarTab: View {
     @Query(sort: \KanbanTask.deadline) private var tasks: [KanbanTask]
-    @Query(filter: #Predicate<Module> { $0.examDate != nil }, sort: \Module.examDate)
-    private var modulesWithExams: [Module]
+    @Query(sort: \Exam.date) private var exams: [Exam]
     @State private var currentMonth: Date = Calendar.current.startOfMonth(for: .now)
 
     private let cal = Calendar.current
@@ -14,8 +13,8 @@ struct CalendarTab: View {
             let tasksByDay = Dictionary(grouping: tasks.filter(\.isVisible)) { task -> Date in
                 cal.startOfDay(for: task.deadline ?? .distantPast)
             }
-            let examsByDay = Dictionary(grouping: modulesWithExams) { module -> Date in
-                cal.startOfDay(for: module.examDate ?? .distantPast)
+            let examsByDay = Dictionary(grouping: exams) { exam -> Date in
+                cal.startOfDay(for: exam.date)
             }
             VStack(spacing: 12) {
                 header
@@ -52,7 +51,7 @@ struct CalendarTab: View {
         }
     }
 
-    private func grid(tasksByDay: [Date: [KanbanTask]], examsByDay: [Date: [Module]]) -> some View {
+    private func grid(tasksByDay: [Date: [KanbanTask]], examsByDay: [Date: [Exam]]) -> some View {
         let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7)
         return LazyVGrid(columns: columns, spacing: 4) {
             ForEach(monthGrid(), id: \.self) { day in
@@ -99,7 +98,7 @@ private struct DayCell: View {
     let inMonth: Bool
     let isToday: Bool
     let tasks: [KanbanTask]
-    let exams: [Module]
+    let exams: [Exam]
 
     private let cal = Calendar.current
 
@@ -114,7 +113,7 @@ private struct DayCell: View {
             if !exams.isEmpty {
                 VStack(spacing: 2) {
                     ForEach(exams.prefix(2)) { exam in
-                        Text(exam.name)
+                        Text(exam.module?.name ?? "—")
                             .font(.system(size: 9, weight: .semibold))
                             .foregroundStyle(.white)
                             .lineLimit(1)
