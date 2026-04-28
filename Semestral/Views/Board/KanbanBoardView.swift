@@ -148,7 +148,7 @@ struct KanbanBoardView: View {
             ContentUnavailableView(
                 "No Modules in This Semester",
                 systemImage: "rectangle.3.group",
-                description: Text("Add a module in the Modules tab to start creating tasks.")
+                description: Text("Right-click “All Modules” in the sidebar to add one.")
             )
         case .some(let scope):
             TimelineView(.everyMinute) { _ in

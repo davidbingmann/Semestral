@@ -9,19 +9,24 @@ struct SemesterSidebarView: View {
 
     @State private var editingModule: Module?
     @State private var deletingModule: Module?
+    @State private var creatingModuleForSemester: Semester?
 
     var body: some View {
         List(selection: $selected) {
             if let sem = semester {
                 Label("All Modules", systemImage: "square.stack")
                     .tag(BoardSelection.semester(sem))
+                    .contextMenu {
+                        Button("New Module…") { creatingModuleForSemester = sem }
+                    }
 
                 ForEach(sem.modules) { mod in
                     ModuleSidebarRow(module: mod)
                         .tag(BoardSelection.module(mod))
                         .contextMenu {
-                            Button("Edit…") { editingModule = mod }
+                            Button("New Module…") { creatingModuleForSemester = sem }
                             Divider()
+                            Button("Edit…") { editingModule = mod }
                             Button("Delete", role: .destructive) {
                                 deletingModule = mod
                             }
@@ -42,6 +47,11 @@ struct SemesterSidebarView: View {
         .sheet(item: $editingModule) { mod in
             if let sem = mod.semester ?? semester {
                 ModuleFormView(semester: sem, existing: mod)
+            }
+        }
+        .sheet(item: $creatingModuleForSemester) { sem in
+            ModuleFormView(semester: sem, existing: nil) { newModule in
+                selected = .module(newModule)
             }
         }
         .confirmationDialog(
