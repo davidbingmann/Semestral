@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct KanbanAppApp: App {
+struct SemestralApp: App {
     let container: ModelContainer
 
     init() {

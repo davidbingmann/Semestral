@@ -1,4 +1,4 @@
-# KanbanApp
+# Semestral
 
 A native macOS Kanban app for managing university coursework. Built with SwiftUI and SwiftData.
 
@@ -19,11 +19,11 @@ A native macOS Kanban app for managing university coursework. Built with SwiftUI
 
 ## Build
 
-The Xcode project is generated from `project.yml`. `KanbanApp.xcodeproj/` is gitignored.
+The Xcode project is generated from `project.yml`. `Semestral.xcodeproj/` is gitignored.
 
 ```bash
 xcodegen generate
-xcodebuild -project KanbanApp.xcodeproj -scheme KanbanApp \
+xcodebuild -project Semestral.xcodeproj -scheme Semestral \
   -configuration Debug -destination 'platform=macOS' build
 ```
 
@@ -32,7 +32,7 @@ After adding, removing, or renaming any `.swift` file, re-run `xcodegen generate
 ## Project layout
 
 ```
-KanbanApp/
+Semestral/
 ├── Models/         Semester (+ DegreeType), Module, KanbanTask, Grade
 ├── Extensions/     Color+Hex
 ├── Views/
@@ -44,6 +44,6 @@ KanbanApp/
 │   ├── Task/          TaskFormView
 │   └── Manage/        SemesterFormView, ModuleFormView
 ├── AppIcon.icon/      Liquid Glass icon bundle
-├── KanbanApp.swift    @main, ModelContainer
+├── Semestral.swift    @main, ModelContainer
 └── ContentView.swift  4-tab TabView
 ```

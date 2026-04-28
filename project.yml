@@ -1,4 +1,4 @@
-name: KanbanApp
+name: Semestral
 options:
   bundleIdPrefix: com.davidbingmann
   deploymentTarget:
@@ -18,20 +18,20 @@ settings:
     ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
 
 targets:
-  KanbanApp:
+  Semestral:
     type: application
     platform: macOS
     deploymentTarget: "14.0"
     sources:
-      - path: KanbanApp
+      - path: Semestral
         type: group
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.davidbingmann.KanbanApp
-        PRODUCT_NAME: KanbanApp
+        PRODUCT_NAME: Semestral
         ENABLE_PREVIEWS: YES
         GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: KanbanApp
+        INFOPLIST_KEY_CFBundleDisplayName: Semestral
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
         INFOPLIST_KEY_NSHumanReadableCopyright: ""
         COMBINE_HIDPI_IMAGES: YES
