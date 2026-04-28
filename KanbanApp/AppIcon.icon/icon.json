@@ -1,19 +1,29 @@
 {
-  "fill" : "automatic",
+  "fill" : {
+    "automatic-gradient" : "extended-srgb:0.00000,0.53333,1.00000,1.00000"
+  },
   "groups" : [
     {
       "layers" : [
         {
-          "glass" : false,
-          "image-name" : "AppIcon.png",
-          "name" : "AppIcon"
+          "image-name" : "ChatGPT Image Apr 28, 2026, 11_57_00 AM.png",
+          "name" : "ChatGPT Image Apr 28, 2026, 11_57_00 AM"
         }
-      ]
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
     }
   ],
   "supported-platforms" : {
-    "squares" : [
-      "macOS"
-    ]
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
   }
 }
