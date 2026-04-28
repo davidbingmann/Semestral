@@ -17,7 +17,39 @@ A native macOS Kanban app for managing university coursework. Built with SwiftUI
 - Xcode 15+ (Liquid Glass app icon needs Xcode 26+)
 - [xcodegen](https://github.com/yonaskolb/XcodeGen) — `brew install xcodegen`
 
-## Build
+## Install
+
+Build the app from source and drop it into `/Applications`. This builds an unsigned, ad-hoc-signed binary — no Apple Developer account required.
+
+```bash
+# 1. Clone
+git clone https://github.com/davidbingmann/Semestral.git
+cd Semestral
+
+# 2. Install xcodegen if you don't have it
+brew install xcodegen
+
+# 3. Generate the Xcode project (from project.yml)
+xcodegen generate
+
+# 4. Build a Release binary
+xcodebuild -project Semestral.xcodeproj -scheme Semestral \
+  -configuration Release -destination 'platform=macOS' build
+
+# 5. Copy the built .app into /Applications
+APP=$(find ~/Library/Developer/Xcode/DerivedData -name "Semestral.app" \
+  -path "*/Release/*" -not -path "*Index.noindex*" -print -quit)
+cp -R "$APP" /Applications/Semestral.app
+
+# 6. Launch
+open /Applications/Semestral.app
+```
+
+The first launch may take a moment while macOS registers the app. If Gatekeeper blocks it because the binary is ad-hoc signed, right-click the app in Finder and choose **Open** once — macOS will remember the choice.
+
+To uninstall, delete `/Applications/Semestral.app`. Your data lives at `~/Library/Application Support/Semestral` (and `~/Library/Containers/com.davidbingmann.KanbanApp` on sandboxed builds) — remove that folder too if you want a clean slate.
+
+## Development
 
 The Xcode project is generated from `project.yml`. `Semestral.xcodeproj/` is gitignored.
 
