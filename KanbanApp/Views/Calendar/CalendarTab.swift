@@ -10,20 +10,22 @@ struct CalendarTab: View {
     private let cal = Calendar.current
 
     var body: some View {
-        let tasksByDay = Dictionary(grouping: tasks) { task -> Date in
-            cal.startOfDay(for: task.deadline ?? .distantPast)
+        TimelineView(.everyMinute) { _ in
+            let tasksByDay = Dictionary(grouping: tasks.filter(\.isVisible)) { task -> Date in
+                cal.startOfDay(for: task.deadline ?? .distantPast)
+            }
+            let examsByDay = Dictionary(grouping: modulesWithExams) { module -> Date in
+                cal.startOfDay(for: module.examDate ?? .distantPast)
+            }
+            VStack(spacing: 12) {
+                header
+                weekdayHeader
+                grid(tasksByDay: tasksByDay, examsByDay: examsByDay)
+                Spacer(minLength: 0)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        let examsByDay = Dictionary(grouping: modulesWithExams) { module -> Date in
-            cal.startOfDay(for: module.examDate ?? .distantPast)
-        }
-        return VStack(spacing: 12) {
-            header
-            weekdayHeader
-            grid(tasksByDay: tasksByDay, examsByDay: examsByDay)
-            Spacer(minLength: 0)
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var header: some View {

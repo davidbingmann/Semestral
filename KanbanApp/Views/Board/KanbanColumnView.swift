@@ -13,15 +13,19 @@ struct KanbanColumnView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
+                Circle()
+                    .fill(status.color)
+                    .frame(width: 8, height: 8)
                 Text(status.label)
                     .font(.headline)
+                    .foregroundStyle(status.color)
                 Text("\(tasks.count)")
                     .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(status.color)
                     .monospacedDigit()
                     .padding(.horizontal, 7)
                     .padding(.vertical, 2)
-                    .background(.secondary.opacity(0.15), in: Capsule())
+                    .background(status.color.opacity(0.15), in: Capsule())
                 Spacer()
             }
             .padding(.horizontal, 4)

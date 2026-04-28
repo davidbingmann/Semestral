@@ -27,10 +27,11 @@ enum BoardSelection: Hashable {
     }
 
     var tasks: [KanbanTask] {
-        switch self {
+        let all: [KanbanTask] = switch self {
         case .semester(let s): s.modules.flatMap(\.tasks)
         case .module(let m):   m.tasks
         }
+        return all.filter(\.isVisible)
     }
 }
 
@@ -158,13 +159,15 @@ struct KanbanBoardView: View {
                 description: Text("Add a module in the Modules tab to start creating tasks.")
             )
         case .some(let scope):
-            BoardColumns(
-                title: scope.title,
-                tasks: scope.tasks,
-                onEdit: { editingTask = $0 },
-                onDelete: delete(task:),
-                onMove: move(task:to:)
-            )
+            TimelineView(.everyMinute) { _ in
+                BoardColumns(
+                    title: scope.title,
+                    tasks: scope.tasks,
+                    onEdit: { editingTask = $0 },
+                    onDelete: delete(task:),
+                    onMove: move(task:to:)
+                )
+            }
         case .none:
             ContentUnavailableView(
                 selectedSemester == nil ? "No Semester" : "Select a Module",

@@ -16,6 +16,7 @@ struct TaskFormView: View {
     @State private var deadline: Date = .now
     @State private var hasTime: Bool = false
     @State private var status: KanbanStatus = .todo
+    @State private var recurrence: KanbanRecurrence?
     @State private var creatingModule = false
 
     private var isEditing: Bool { existing != nil }
@@ -49,6 +50,13 @@ struct TaskFormView: View {
                     )
                     LabeledContent("Time") {
                         timeField
+                    }
+                }
+
+                Picker("Repeat", selection: $recurrence) {
+                    Text("Never").tag(KanbanRecurrence?.none)
+                    ForEach(KanbanRecurrence.allCases) { r in
+                        Text(r.label).tag(KanbanRecurrence?.some(r))
                     }
                 }
 
@@ -148,6 +156,7 @@ struct TaskFormView: View {
             notes = t.notes
             module = t.module
             status = t.status
+            recurrence = t.recurrence
             if let d = t.deadline {
                 hasDeadline = true
                 deadline = d
@@ -162,25 +171,32 @@ struct TaskFormView: View {
         let trimmed = title.trimmingCharacters(in: .whitespaces)
         let dl = hasDeadline ? deadline : nil
         let dlHasTime = hasDeadline && hasTime
-        if let t = existing {
-            t.title = trimmed
-            t.notes = notes
-            t.deadline = dl
-            t.deadlineHasTime = dlHasTime
-            t.module = module
-            if t.status != status {
-                t.updateStatus(status)
+        let task: KanbanTask
+        if let existing {
+            task = existing
+            task.title = trimmed
+            task.notes = notes
+            task.deadline = dl
+            task.deadlineHasTime = dlHasTime
+            task.module = module
+            task.recurrence = recurrence
+            if task.status != status {
+                task.updateStatus(status)
             }
         } else {
-            let t = KanbanTask(
+            task = KanbanTask(
                 title: trimmed,
                 notes: notes,
                 deadline: dl,
                 deadlineHasTime: dlHasTime,
                 module: module,
-                status: status
+                status: status,
+                recurrence: recurrence
             )
-            context.insert(t)
+            context.insert(task)
+        }
+        if task.status == .done && task.recurrence != nil {
+            task.updateStatus(.done)
         }
         try? context.save()
         dismiss()

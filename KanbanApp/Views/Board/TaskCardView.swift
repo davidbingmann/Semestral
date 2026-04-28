@@ -17,6 +17,13 @@ struct TaskCardView: View {
                         .lineLimit(1)
                 }
                 Spacer()
+                if let rec = task.recurrence {
+                    Label(rec.label, systemImage: "arrow.triangle.2.circlepath")
+                        .labelStyle(.iconOnly)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .help("Repeats \(rec.label.lowercased())")
+                }
             }
 
             Text(task.title.isEmpty ? "Untitled" : task.title)
