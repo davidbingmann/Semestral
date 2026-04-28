@@ -118,7 +118,7 @@ final class KanbanTask {
     }
 
     static func deleteExpired(in context: ModelContext) {
-        let cutoff = Calendar.current.date(byAdding: .day, value: -14, to: .now) ?? .now
+        let cutoff = Calendar.current.date(byAdding: .day, value: -3, to: .now) ?? .now
         let sentinel = Date.distantFuture
         let predicate = #Predicate<KanbanTask> { task in
             (task.completedAt ?? sentinel) < cutoff

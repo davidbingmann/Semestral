@@ -4,6 +4,8 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var context
 
+    private let cleanupTimer = Timer.publish(every: 3600, on: .main, in: .common).autoconnect()
+
     var body: some View {
         TabView {
             KanbanBoardView()
@@ -19,10 +21,13 @@ struct ContentView: View {
                 .tabItem { Label("Grades", systemImage: "chart.bar.fill") }
         }
         .frame(minWidth: 960, minHeight: 640)
-        .task {
-            KanbanTask.deleteExpired(in: context)
-            Module.expireOldExams(in: context)
-        }
+        .task { runCleanup() }
+        .onReceive(cleanupTimer) { _ in runCleanup() }
+    }
+
+    private func runCleanup() {
+        KanbanTask.deleteExpired(in: context)
+        Module.expireOldExams(in: context)
     }
 }
 
