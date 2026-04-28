@@ -6,6 +6,7 @@ final class Module {
     var name: String
     var colorHex: String
     var examDate: Date?
+    var examDateHasTime: Bool = true
     var semester: Semester?
 
     @Relationship(deleteRule: .cascade, inverse: \KanbanTask.module)
@@ -33,5 +34,20 @@ final class Module {
         return palette.min(by: { a, b in
             used.filter { $0 == a }.count < used.filter { $0 == b }.count
         }) ?? palette[0]
+    }
+
+    static func expireOldExams(in context: ModelContext) {
+        let cutoff = Calendar.current.date(byAdding: .day, value: -1, to: .now) ?? .now
+        let sentinel = Date.distantFuture
+        let predicate = #Predicate<Module> { module in
+            (module.examDate ?? sentinel) < cutoff
+        }
+        do {
+            let stale = try context.fetch(FetchDescriptor<Module>(predicate: predicate))
+            for m in stale { m.examDate = nil }
+            try context.save()
+        } catch {
+            // best-effort cleanup; surface nothing
+        }
     }
 }

@@ -16,6 +16,7 @@ struct TaskFormView: View {
     @State private var deadline: Date = .now
     @State private var hasTime: Bool = false
     @State private var status: KanbanStatus = .todo
+    @State private var creatingModule = false
 
     private var isEditing: Bool { existing != nil }
 
@@ -31,14 +32,7 @@ struct TaskFormView: View {
             Form {
                 TextField("Title", text: $title, prompt: Text("e.g. Read Chapter 3"))
 
-                if !availableModules.isEmpty {
-                    Picker("Module", selection: $module) {
-                        Text("None").tag(Module?.none)
-                        ForEach(availableModules) { m in
-                            Text(m.name).tag(Module?.some(m))
-                        }
-                    }
-                }
+                LabeledContent("Module") { moduleMenu }
 
                 Picker("Status", selection: $status) {
                     ForEach(KanbanStatus.allCases) { s in
@@ -70,12 +64,55 @@ struct TaskFormView: View {
                 Button("Cancel") { dismiss() }
                 Button(isEditing ? "Save" : "Create") { save() }
                     .keyboardShortcut(.defaultAction)
-                    .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(
+                        title.trimmingCharacters(in: .whitespaces).isEmpty
+                            || module == nil
+                    )
             }
         }
         .padding()
         .frame(minWidth: 520, minHeight: 520)
         .onAppear(perform: load)
+        .sheet(isPresented: $creatingModule) {
+            if let s = semester {
+                ModuleFormView(semester: s, existing: nil) { newModule in
+                    module = newModule
+                }
+            }
+        }
+    }
+
+    private var moduleMenu: some View {
+        Menu {
+            Picker(selection: $module) {
+                Text("None").tag(Module?.none)
+                ForEach(availableModules) { m in
+                    Text(m.name).tag(Module?.some(m))
+                }
+            } label: {
+                Text("Module")
+            }
+            .pickerStyle(.inline)
+
+            Divider()
+
+            Button {
+                creatingModule = true
+            } label: {
+                Label("New Module…", systemImage: "plus")
+            }
+            .disabled(semester == nil)
+        } label: {
+            HStack(spacing: 6) {
+                if let m = module {
+                    ModuleSwatch(colorHex: m.colorHex, size: 8)
+                    Text(m.name)
+                } else {
+                    Text("None").foregroundStyle(.secondary)
+                }
+            }
+        }
+        .fixedSize()
     }
 
     @ViewBuilder

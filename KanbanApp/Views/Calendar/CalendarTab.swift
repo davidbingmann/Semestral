@@ -3,6 +3,8 @@ import SwiftData
 
 struct CalendarTab: View {
     @Query(sort: \KanbanTask.deadline) private var tasks: [KanbanTask]
+    @Query(filter: #Predicate<Module> { $0.examDate != nil }, sort: \Module.examDate)
+    private var modulesWithExams: [Module]
     @State private var currentMonth: Date = Calendar.current.startOfMonth(for: .now)
 
     private let cal = Calendar.current
@@ -11,10 +13,13 @@ struct CalendarTab: View {
         let tasksByDay = Dictionary(grouping: tasks) { task -> Date in
             cal.startOfDay(for: task.deadline ?? .distantPast)
         }
+        let examsByDay = Dictionary(grouping: modulesWithExams) { module -> Date in
+            cal.startOfDay(for: module.examDate ?? .distantPast)
+        }
         return VStack(spacing: 12) {
             header
             weekdayHeader
-            grid(tasksByDay: tasksByDay)
+            grid(tasksByDay: tasksByDay, examsByDay: examsByDay)
             Spacer(minLength: 0)
         }
         .padding(16)
@@ -45,7 +50,7 @@ struct CalendarTab: View {
         }
     }
 
-    private func grid(tasksByDay: [Date: [KanbanTask]]) -> some View {
+    private func grid(tasksByDay: [Date: [KanbanTask]], examsByDay: [Date: [Module]]) -> some View {
         let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7)
         return LazyVGrid(columns: columns, spacing: 4) {
             ForEach(monthGrid(), id: \.self) { day in
@@ -53,7 +58,8 @@ struct CalendarTab: View {
                     date: day,
                     inMonth: cal.isDate(day, equalTo: currentMonth, toGranularity: .month),
                     isToday: cal.isDateInToday(day),
-                    tasks: tasksByDay[cal.startOfDay(for: day)] ?? []
+                    tasks: tasksByDay[cal.startOfDay(for: day)] ?? [],
+                    exams: examsByDay[cal.startOfDay(for: day)] ?? []
                 )
             }
         }
@@ -91,6 +97,7 @@ private struct DayCell: View {
     let inMonth: Bool
     let isToday: Bool
     let tasks: [KanbanTask]
+    let exams: [Module]
 
     private let cal = Calendar.current
 
@@ -101,6 +108,31 @@ private struct DayCell: View {
                 .foregroundStyle(numberColor)
                 .frame(width: 24, height: 24)
                 .background(isToday ? Color.accentColor : .clear, in: Circle())
+
+            if !exams.isEmpty {
+                VStack(spacing: 2) {
+                    ForEach(exams.prefix(2)) { exam in
+                        Text(exam.name)
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                                    .fill(.red)
+                            )
+                    }
+                    if exams.count > 2 {
+                        Text("+\(exams.count - 2) more")
+                            .font(.system(size: 8, weight: .medium))
+                            .foregroundStyle(.red)
+                    }
+                }
+                .padding(.horizontal, 3)
+            }
 
             HStack(spacing: 3) {
                 ForEach(Array(tasks.prefix(3))) { t in

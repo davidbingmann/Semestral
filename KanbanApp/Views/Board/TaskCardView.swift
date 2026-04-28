@@ -30,14 +30,11 @@ struct TaskCardView: View {
                     .monospacedDigit()
             }
         }
-        .padding(10)
+        .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.background, in: RoundedRectangle(cornerRadius: 8))
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .strokeBorder(.separator, lineWidth: 0.5)
-        )
-        .contentShape(Rectangle())
+        .background(.background, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .shadow(color: .black.opacity(0.06), radius: 1.5, x: 0, y: 0.5)
+        .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .onTapGesture { onEdit() }
         .draggable(TaskDragPayload(id: task.persistentModelID))
         .contextMenu {

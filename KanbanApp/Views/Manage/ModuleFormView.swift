@@ -7,10 +7,12 @@ struct ModuleFormView: View {
 
     let semester: Semester
     let existing: Module?
+    var onSave: ((Module) -> Void)? = nil
 
     @State private var name: String = ""
     @State private var colorHex: String = ""
     @State private var hasExam: Bool = false
+    @State private var hasTime: Bool = false
     @State private var examDate: Date = .now
 
     private var isEditing: Bool { existing != nil }
@@ -29,6 +31,12 @@ struct ModuleFormView: View {
 
                 LabeledContent("Exam date") {
                     examDateField
+                }
+
+                if hasExam {
+                    LabeledContent("Time") {
+                        timeField
+                    }
                 }
             }
             .formStyle(.grouped)
@@ -50,14 +58,13 @@ struct ModuleFormView: View {
     private var examDateField: some View {
         if hasExam {
             HStack(spacing: 8) {
-                DatePicker(
-                    "",
-                    selection: $examDate,
-                    displayedComponents: [.date, .hourAndMinute]
-                )
-                .labelsHidden()
+                DatePicker("", selection: $examDate, displayedComponents: .date)
+                    .labelsHidden()
                 Button("Remove") {
-                    withAnimation { hasExam = false }
+                    withAnimation {
+                        hasExam = false
+                        hasTime = false
+                    }
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(.red)
@@ -69,6 +76,29 @@ struct ModuleFormView: View {
                 Button("Set date…") {
                     examDate = .now
                     withAnimation { hasExam = true }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var timeField: some View {
+        if hasTime {
+            HStack(spacing: 8) {
+                DatePicker("", selection: $examDate, displayedComponents: .hourAndMinute)
+                    .labelsHidden()
+                Button("Remove") {
+                    withAnimation { hasTime = false }
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.red)
+            }
+        } else {
+            HStack {
+                Text("Not set").foregroundStyle(.secondary)
+                Spacer()
+                Button("Set time…") {
+                    withAnimation { hasTime = true }
                 }
             }
         }
@@ -98,6 +128,7 @@ struct ModuleFormView: View {
             colorHex = m.colorHex
             if let d = m.examDate {
                 hasExam = true
+                hasTime = m.examDateHasTime
                 examDate = d
             }
         } else {
@@ -108,15 +139,21 @@ struct ModuleFormView: View {
     private func save() {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         let exam = hasExam ? examDate : nil
+        let result: Module
         if let m = existing {
             m.name = trimmed
             m.colorHex = colorHex
             m.examDate = exam
+            m.examDateHasTime = hasExam ? hasTime : true
+            result = m
         } else {
             let m = Module(name: trimmed, colorHex: colorHex, examDate: exam, semester: semester)
+            m.examDateHasTime = hasExam ? hasTime : true
             context.insert(m)
+            result = m
         }
         try? context.save()
+        onSave?(result)
         dismiss()
     }
 }
