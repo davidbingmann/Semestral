@@ -14,6 +14,7 @@ struct TaskFormView: View {
     @State private var module: Module?
     @State private var hasDeadline: Bool = false
     @State private var deadline: Date = .now
+    @State private var hasTime: Bool = false
     @State private var status: KanbanStatus = .todo
 
     private var isEditing: Bool { existing != nil }
@@ -48,10 +49,13 @@ struct TaskFormView: View {
                 Toggle("Has deadline", isOn: $hasDeadline.animation())
                 if hasDeadline {
                     DatePicker(
-                        "Deadline",
+                        "Date",
                         selection: $deadline,
-                        displayedComponents: [.date, .hourAndMinute]
+                        displayedComponents: .date
                     )
+                    LabeledContent("Time") {
+                        timeField
+                    }
                 }
 
                 Section("Notes") {
@@ -74,6 +78,33 @@ struct TaskFormView: View {
         .onAppear(perform: load)
     }
 
+    @ViewBuilder
+    private var timeField: some View {
+        if hasTime {
+            HStack(spacing: 8) {
+                DatePicker(
+                    "",
+                    selection: $deadline,
+                    displayedComponents: .hourAndMinute
+                )
+                .labelsHidden()
+                Button("Remove") {
+                    withAnimation { hasTime = false }
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.red)
+            }
+        } else {
+            HStack {
+                Text("Not set").foregroundStyle(.secondary)
+                Spacer()
+                Button("Set time…") {
+                    withAnimation { hasTime = true }
+                }
+            }
+        }
+    }
+
     private func load() {
         if let t = existing {
             title = t.title
@@ -83,6 +114,7 @@ struct TaskFormView: View {
             if let d = t.deadline {
                 hasDeadline = true
                 deadline = d
+                hasTime = t.deadlineHasTime
             }
         } else {
             module = defaultModule
@@ -92,10 +124,12 @@ struct TaskFormView: View {
     private func save() {
         let trimmed = title.trimmingCharacters(in: .whitespaces)
         let dl = hasDeadline ? deadline : nil
+        let dlHasTime = hasDeadline && hasTime
         if let t = existing {
             t.title = trimmed
             t.notes = notes
             t.deadline = dl
+            t.deadlineHasTime = dlHasTime
             t.module = module
             if t.status != status {
                 t.updateStatus(status)
@@ -105,6 +139,7 @@ struct TaskFormView: View {
                 title: trimmed,
                 notes: notes,
                 deadline: dl,
+                deadlineHasTime: dlHasTime,
                 module: module,
                 status: status
             )

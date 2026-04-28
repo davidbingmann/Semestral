@@ -20,6 +20,7 @@ final class KanbanTask {
     var title: String
     var notes: String
     var deadline: Date?
+    var deadlineHasTime: Bool = true
     var module: Module?
     var status: KanbanStatus
     var completedAt: Date?
@@ -28,12 +29,14 @@ final class KanbanTask {
         title: String = "",
         notes: String = "",
         deadline: Date? = nil,
+        deadlineHasTime: Bool = true,
         module: Module? = nil,
         status: KanbanStatus = .todo
     ) {
         self.title = title
         self.notes = notes
         self.deadline = deadline
+        self.deadlineHasTime = deadlineHasTime
         self.module = module
         self.status = status
         self.completedAt = status == .done ? .now : nil

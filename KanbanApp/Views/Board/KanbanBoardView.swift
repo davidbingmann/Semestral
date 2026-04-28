@@ -126,12 +126,22 @@ private struct BoardColumns: View {
                     tasks: filteredTasks(for: status),
                     onEdit: onEdit,
                     onDelete: onDelete,
-                    onMove: onMove
+                    onMove: onMove,
+                    onDrop: { payloads in handleDrop(payloads, to: status) }
                 )
             }
         }
         .padding(12)
         .navigationTitle(title)
+    }
+
+    private func handleDrop(_ payloads: [TaskDragPayload], to status: KanbanStatus) {
+        for payload in payloads {
+            if let task = tasks.first(where: { $0.persistentModelID == payload.id }),
+               task.status != status {
+                onMove(task, status)
+            }
+        }
     }
 
     private func filteredTasks(for status: KanbanStatus) -> [KanbanTask] {

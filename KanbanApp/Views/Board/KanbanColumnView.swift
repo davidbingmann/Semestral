@@ -6,6 +6,9 @@ struct KanbanColumnView: View {
     let onEdit: (KanbanTask) -> Void
     let onDelete: (KanbanTask) -> Void
     let onMove: (KanbanTask, KanbanStatus) -> Void
+    let onDrop: ([TaskDragPayload]) -> Void
+
+    @State private var isTargeted = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -36,6 +39,19 @@ struct KanbanColumnView: View {
         }
         .padding(8)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12))
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(.background.secondary)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(Color.accentColor, lineWidth: isTargeted ? 2 : 0)
+        )
+        .dropDestination(for: TaskDragPayload.self) { payloads, _ in
+            onDrop(payloads)
+            return !payloads.isEmpty
+        } isTargeted: { targeted in
+            isTargeted = targeted
+        }
     }
 }
