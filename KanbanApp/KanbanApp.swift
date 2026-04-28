@@ -8,7 +8,7 @@ struct KanbanAppApp: App {
     init() {
         do {
             container = try ModelContainer(
-                for: Semester.self, Module.self, KanbanTask.self
+                for: Semester.self, Module.self, KanbanTask.self, Grade.self
             )
         } catch {
             fatalError("Failed to create ModelContainer: \(error)")

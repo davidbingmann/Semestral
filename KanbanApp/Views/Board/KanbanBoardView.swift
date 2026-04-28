@@ -69,14 +69,6 @@ struct KanbanBoardView: View {
             ToolbarItem(placement: .navigation) {
                 semesterMenu
             }
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    creatingTask = true
-                } label: {
-                    Label("Add Task", systemImage: "plus")
-                }
-                .disabled(selected?.defaultModule == nil)
-            }
         }
         .sheet(isPresented: $creatingTask) {
             TaskFormView(

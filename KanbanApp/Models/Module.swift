@@ -12,6 +12,9 @@ final class Module {
     @Relationship(deleteRule: .cascade, inverse: \KanbanTask.module)
     var tasks: [KanbanTask] = []
 
+    @Relationship(deleteRule: .cascade, inverse: \Grade.module)
+    var grades: [Grade] = []
+
     init(name: String, colorHex: String, examDate: Date? = nil, semester: Semester? = nil) {
         self.name = name
         self.colorHex = colorHex

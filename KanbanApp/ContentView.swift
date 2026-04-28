@@ -14,6 +14,9 @@ struct ContentView: View {
 
             ExamsTab()
                 .tabItem { Label("Exams", systemImage: "graduationcap") }
+
+            GradesTab()
+                .tabItem { Label("Grades", systemImage: "chart.bar.fill") }
         }
         .frame(minWidth: 960, minHeight: 640)
         .task {
@@ -25,5 +28,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: [Semester.self, Module.self, KanbanTask.self], inMemory: true)
+        .modelContainer(for: [Semester.self, Module.self, KanbanTask.self, Grade.self], inMemory: true)
 }
